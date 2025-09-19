@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Index Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 3rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 90%;
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #22c55e;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .test-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .test-card h3 {
+            color: #4f46e5;
+            margin-bottom: 0.5rem;
+        }
+        
+        .test-result {
+            font-weight: bold;
+            padding: 0.5rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+        }
+        
+        .pass { background: #dcfce7; color: #166534; }
+        .fail { background: #fef2f2; color: #dc2626; }
+        
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            margin: 0.5rem;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        #output {
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 8px;
+            border-left: 4px solid #4f46e5;
+            text-align: left;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .hidden { display: none; }
+        
+        .timestamp {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>
+            <span class="status-indicator"></span>
+            HTML Test Environment
+        </h1>
+        
+        <p class="timestamp" id="timestamp"></p>
+        
+        <div class="test-grid">
+            <div class="test-card" onclick="runDOMTest()">
+                <h3>DOM Manipulation</h3>
+                <p>Test dynamic content creation and modification</p>
+                <div class="test-result" id="dom-result">Ready to test</div>
+            </div>
+            
+            <div class="test-card" onclick="runEventTest()">
+                <h3>Event Handling</h3>
+                <p>Test user interaction and event listeners</p>
+                <div class="test-result" id="event-result">Ready to test</div>
+            </div>
+            
+            <div class="test-card" onclick="runStorageTest()">
+                <h3>Memory Storage</h3>
+                <p>Test in-memory data persistence</p>
+                <div class="test-result" id="storage-result">Ready to test</div>
+            </div>
+            
+            <div class="test-card" onclick="runAsyncTest()">
+                <h3>Async Operations</h3>
+                <p>Test promises and async functionality</p>
+                <div class="test-result" id="async-result">Ready to test</div>
+            </div>
+        </div>
+        
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearOutput()">Clear Output</button>
+        <button onclick="downloadResults()">Download Results</button>
+        
+        <div id="output" class="hidden"></div>
+    </div>
+
+    <script>
+        // Global test state
+        let testData = {};
+        let testResults = [];
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateTimestamp();
+            setInterval(updateTimestamp, 1000);
+            log('Page loaded successfully');
+        });
+        
+        function updateTimestamp() {
+            document.getElementById('timestamp').textContent = 
+                'Last updated: ' + new Date().toLocaleString();
+        }
+        
+        function log(message) {
+            const output = document.getElementById('output');
+            output.classList.remove('hidden');
+            output.textContent += new Date().toLocaleTimeString() + ': ' + message + '\n';
+            output.scrollTop = output.scrollHeight;
+        }
+        
+        function updateTestResult(testId, passed, message) {
+            const element = document.getElementById(testId + '-result');
+            element.className = 'test-result ' + (passed ? 'pass' : 'fail');
+            element.textContent = passed ? '✓ PASS: ' + message : '✗ FAIL: ' + message;
+            
+            testResults.push({
+                test: testId,
+                passed: passed,
+                message: message,
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        function runDOMTest() {
+            log('Running DOM manipulation test...');
+            try {
+                // Create element
+                const testDiv = document.createElement('div');
+                testDiv.id = 'test-element';
+                testDiv.textContent = 'Test content';
+                document.body.appendChild(testDiv);
+                
+                // Modify element
+                testDiv.style.color = 'blue';
+                testDiv.setAttribute('data-test', 'success');
+                
+                // Verify
+                const found = document.getElementById('test-element');
+                const hasAttribute = found.getAttribute('data-test') === 'success';
+                const hasStyle = found.style.color === 'blue';
+                
+                // Cleanup
+                document.body.removeChild(testDiv);
+                
+                const passed = found && hasAttribute && hasStyle;
+                updateTestResult('dom', passed, passed ? 'Element created and modified' : 'DOM operations failed');
+                log('DOM test completed: ' + (passed ? 'PASS' : 'FAIL'));
+                
+            } catch (error) {
+                updateTestResult('dom', false, 'Error: ' + error.message);
+                log('DOM test error: ' + error.message);
+            }
+        }
+        
+        function runEventTest() {
+            log('Running event handling test...');
+            try {
+                let eventFired = false;
+                
+                // Create test element
+                const button = document.createElement('button');
+                button.textContent = 'Test Button';
+                
+                // Add event listener
+                button.addEventListener('click', function() {
+                    eventFired = true;
+                });
+                
+                // Simulate click
+                button.click();
+                
+                const passed = eventFired;
+                updateTestResult('event', passed, passed ? 'Event listener worked' : 'Event not triggered');
+                log('Event test completed: ' + (passed ? 'PASS' : 'FAIL'));
+                
+            } catch (error) {
+                updateTestResult('event', false, 'Error: ' + error.message);
+                log('Event test error: ' + error.message);
+            }
+        }
+        
+        function runStorageTest() {
+            log('Running memory storage test...');
+            try {
+                // Test in-memory storage
+                testData.sampleKey = 'sampleValue';
+                testData.numberValue = 42;
+                testData.objectValue = { nested: true, count: 3 };
+                
+                // Verify storage
+                const stringTest = testData.sampleKey === 'sampleValue';
+                const numberTest = testData.numberValue === 42;
+                const objectTest = testData.objectValue.nested === true;
+                
+                const passed = stringTest && numberTest && objectTest;
+                updateTestResult('storage', passed, passed ? 'Memory storage working' : 'Storage failed');
+                log('Storage test completed: ' + (passed ? 'PASS' : 'FAIL'));
+                
+            } catch (error) {
+                updateTestResult('storage', false, 'Error: ' + error.message);
+                log('Storage test error: ' + error.message);
+            }
+        }
+        
+        function runAsyncTest() {
+            log('Running async operations test...');
+            
+            const testPromise = new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve('Async operation completed');
+                }, 100);
+            });
+            
+            testPromise.then((result) => {
+                const passed = result === 'Async operation completed';
+                updateTestResult('async', passed, passed ? 'Promise resolved' : 'Promise failed');
+                log('Async test completed: ' + (passed ? 'PASS' : 'FAIL'));
+            }).catch((error) => {
+                updateTestResult('async', false, 'Error: ' + error.message);
+                log('Async test error: ' + error.message);
+            });
+        }
+        
+        function runAllTests() {
+            log('Starting comprehensive test suite...');
+            testResults = [];
+            
+            runDOMTest();
+            runEventTest();
+            runStorageTest();
+            runAsyncTest();
+            
+            setTimeout(() => {
+                const passedTests = testResults.filter(r => r.passed).length;
+                const totalTests = testResults.length;
+                log(`Test suite completed: ${passedTests}/${totalTests} tests passed`);
+            }, 500);
+        }
+        
+        function clearOutput() {
+            document.getElementById('output').textContent = '';
+            document.getElementById('output').classList.add('hidden');
+            log('Output cleared');
+        }
+        
+        function downloadResults() {
+            const results = {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                tests: testResults,
+                summary: {
+                    total: testResults.length,
+                    passed: testResults.filter(r => r.passed).length,
+                    failed: testResults.filter(r => !r.passed).length
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(results, null, 2)], {
+                type: 'application/json'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'test-results-' + new Date().toISOString().split('T')[0] + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log('Test results downloaded');
+        }
+    </script>
+</body>
+</html>
